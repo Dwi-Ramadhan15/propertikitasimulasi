@@ -1,0 +1,5 @@
+.env
+node_modules
+backend/minio.exe
+data/
+minio.exe
