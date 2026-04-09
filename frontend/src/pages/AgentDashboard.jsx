@@ -118,15 +118,14 @@ export default function AgentDashboard() {
         )}
 
         {activeTab === 'add' && (
-          <div className="max-w-3xl">
-            <div className="mb-8"><h1 className="text-3xl font-extrabold text-gray-800">Tambah Listing Baru</h1></div>
+          <div className="max-w-3xl grid-cols-2 mx-auto">
+            <div className="mb-8"><h1 className="text-3xl font-extrabold text-gray-800 text-center grid-cols-1 gap-6">Tambah Listing Baru</h1></div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6">
                   <div><label className="block text-sm font-bold text-gray-700 mb-1">Judul Properti</label><input required type="text" name="title" value={formData.title} onChange={handleChange} className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all" /></div>
                   <div><label className="block text-sm font-bold text-gray-700 mb-1">Deskripsi Lengkap</label><textarea required name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all"></textarea></div>
                   
-                  {/* INPUT ALAMAT BARU */}
                   <div><label className="block text-sm font-bold text-gray-700 mb-1">Alamat Lengkap</label><textarea required name="address" placeholder="Contoh: Jl. Sudirman No. 12, Jakarta Pusat" value={formData.address} onChange={handleChange} rows="2" className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all"></textarea></div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -134,6 +133,9 @@ export default function AgentDashboard() {
                     <div><label className="block text-sm font-bold text-gray-700 mb-1">Luas (m²)</label><input required type="number" name="area_sqm" value={formData.area_sqm} onChange={handleChange} className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all" /></div>
                     <div><label className="block text-sm font-bold text-gray-700 mb-1">Kamar Tidur</label><input required type="number" name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all" /></div>
                     <div><label className="block text-sm font-bold text-gray-700 mb-1">Kamar Mandi</label><input required type="number" name="bathrooms" value={formData.bathrooms} onChange={handleChange} className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all" /></div>
+                  </div>
+                  <div className="border-t border-gray-200">
+                    <div><label className="block text-sm font-bold text-gray-700 mb-1"> Fasilitas </label><input required type="text" name="facilities" value={formData.facilities} onChange={handleChange} className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/50 outline-none transition-all" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 bg-blue-50/50 p-5 rounded-xl border border-blue-100">
                     <div className="col-span-2"><p className="text-sm text-blue-800 font-bold flex items-center gap-1"><MapPin size={16}/> Titik Koordinat Peta</p></div>

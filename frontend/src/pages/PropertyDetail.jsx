@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Bed, Bath, Maximize, User, Phone, ArrowLeft, Image as ImageIcon, CheckCircle, ExternalLink } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, User, Phone, ArrowLeft, Image as ImageIcon, CheckCircle, ExternalLink, MessageCircle, Waves, TreePine, ShieldCheck, Car, Wifi } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -24,11 +24,7 @@ function MapEvents({ target, property }) {
     <Marker 
       position={target} 
       icon={customIcon}
-      eventHandlers={{
-        click: (e) => {
-          map.setView(e.latlng, 17, { animate: true });
-        },
-      }}
+      eventHandlers={{ click: (e) => map.setView(e.latlng, 17, { animate: true }) }}
     >
       <Popup minWidth={220}>
         <div className="flex flex-col gap-2 p-1">
@@ -39,17 +35,13 @@ function MapEvents({ target, property }) {
             <h4 className="font-bold text-gray-800 leading-tight text-sm">{property.title}</h4>
             <p className="text-blue-600 font-black text-sm mt-0.5">{formatRupiah(property.price)}</p>
           </div>
-          <div className="text-[10px] text-gray-500 bg-gray-50 p-2 rounded border border-gray-100 font-mono">
-            <p>Lat: {property.latitude}</p>
-            <p>Lon: {property.longitude}</p>
-          </div>
           <a 
-            href={`https://www.google.com/maps?q=${property.latitude},${property.longitude}`} 
+            href={`http://maps.google.com/maps?q=${property.latitude},${property.longitude}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-blue-600 text-white text-[11px] font-bold py-2 rounded hover:bg-blue-700 transition-all no-underline shadow-sm"
+            className="flex items-center justify-center gap-2 bg-green-200 text-white text-[11px] font-bold py-2 rounded hover:bg-green-500 transition-all no-underline shadow-sm mt-1"
           >
-            <ExternalLink size={12} /> Petunjuk Arah
+            <ExternalLink size={12} /> Buka Google Maps
           </a>
         </div>
       </Popup>
@@ -57,12 +49,24 @@ function MapEvents({ target, property }) {
   );
 }
 
+const getFacilityIcon = (name) => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('kolam') || lowerName.includes('renang')) return <Waves size={20} />;
+  if (lowerName.includes('taman') || lowerName.includes('hijau')) return <TreePine size={20} />;
+  if (lowerName.includes('aman') || lowerName.includes('security')) return <ShieldCheck size={20} />;
+  if (lowerName.includes('carport') || lowerName.includes('parkir')) return <Car size={20} />;
+  if (lowerName.includes('wifi') || lowerName.includes('internet')) return <Wifi size={20} />;
+  return <CheckCircle size={20} />; 
+};
+
 export default function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
   const [mainImage, setMainImage] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  const [waMessage, setWaMessage] = useState("Halo, saya tertarik dengan properti ini. Boleh minta info lebih lanjut?");
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -70,12 +74,12 @@ export default function PropertyDetail() {
         const response = await api.get(`/properties/${id}`);
         setProperty(response.data);
         if (response.data.images?.length > 0) setMainImage(response.data.images[0]);
+        
+        setWaMessage(`Halo ${response.data.agent_name}, saya melihat properti *${response.data.title}* di PropertiKita. Apakah masih tersedia?`);
       } catch (err) {
         alert("Properti tidak ditemukan!");
         navigate('/');
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
     fetchDetail();
   }, [id, navigate]);
@@ -84,7 +88,7 @@ export default function PropertyDetail() {
     const token = localStorage.getItem('token');
     if (!token) {
       e.preventDefault();
-      alert("Maaf, Anda harus login terlebih dahulu untuk menghubungi agen.");
+      alert("Maaf, Anda harus login terlebih dahulu untuk mengirim pesan ke agen.");
       navigate('/auth');
       return;
     }
@@ -97,8 +101,9 @@ export default function PropertyDetail() {
   const lon = parseFloat(property.longitude);
   const position = [lat, lon];
   const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+  
   const waNumber = property.agent_phone?.startsWith('0') ? '62' + property.agent_phone.substring(1) : property.agent_phone;
-  const waLink = `https://wa.me/${waNumber}?text=Halo%20${property.agent_name},%20saya%20tertarik%20dengan%20properti%20*${property.title}*.`;
+  const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-6">
@@ -108,24 +113,53 @@ export default function PropertyDetail() {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="h-[400px] md:h-[550px] w-full bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 p-2">
-              <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-100">
-                {mainImage ? <img src={mainImage} alt={property.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><ImageIcon size={60}/></div>}
+          
+          <div className="lg:col-span-2 space-y-6">
+            
+            <div className="space-y-4">
+              <div className="h-[400px] md:h-[550px] w-full bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 p-2">
+                <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-100 relative group">
+                  {mainImage ? <img src={mainImage} alt={property.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><ImageIcon size={60}/></div>}
+                </div>
               </div>
+              {property.images?.length > 1 && (
+                <div className="flex gap-4 overflow-x-auto pb-2 px-1 scrollbar-hide snap-x">
+                  {property.images.map((img, idx) => (
+                    <div key={idx} onClick={() => setMainImage(img)} className={`h-24 w-32 flex-shrink-0 snap-start rounded-2xl overflow-hidden cursor-pointer border-[3px] transition-all ${mainImage === img ? 'border-blue-600 scale-105 shadow-md' : 'border-white opacity-70 hover:opacity-100'}`}>
+                      <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            {property.images?.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-2 px-1 scrollbar-hide">
-                {property.images.map((img, idx) => (
-                  <div key={idx} onClick={() => setMainImage(img)} className={`h-24 w-32 flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer border-[3px] transition-all ${mainImage === img ? 'border-blue-600 scale-105' : 'border-white opacity-70 hover:opacity-100'}`}>
-                    <img src={img} alt="thumb" className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
+
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mt-8">
+              <h3 className="font-extrabold text-gray-800 mb-6 text-xl">Fasilitas Unggulan</h3>
+              {property.facilities ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {(typeof property.facilities === 'string' ? JSON.parse(property.facilities) : property.facilities).map((fasilitas, idx) => (
+                    <div key={idx} className="flex items-center gap-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50 text-blue-800 hover:bg-blue-100 transition-colors cursor-default">
+                      <div className="bg-white p-2 rounded-lg text-blue-600 shadow-sm">
+                        {getFacilityIcon(fasilitas)}
+                      </div>
+                      <span className="font-bold text-sm">{fasilitas}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm italic">Fasilitas belum ditambahkan oleh agen.</p>
+              )}
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+              <h3 className="font-extrabold text-gray-800 mb-4 text-xl">Deskripsi Properti</h3>
+              <p className="text-gray-600 text-sm md:text-base whitespace-pre-wrap leading-relaxed text-justify">{property.description}</p>
+            </div>
+            
           </div>
 
           <div className="space-y-6">
+            
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-green-500 text-white px-5 py-2 rounded-bl-3xl font-bold text-xs flex items-center gap-1.5 shadow-sm"><CheckCircle size={14}/> Terverifikasi</div>
               
@@ -134,32 +168,37 @@ export default function PropertyDetail() {
                   <MapPin size={18} className="text-red-500 shrink-0 mt-0.5"/> 
                   <span>{property.address || "Alamat belum tersedia"}</span>
                 </div>
-                <div className="text-[10px] text-gray-500 ml-6 mt-2 font-mono bg-gray-50 w-fit px-2 py-1 rounded border border-gray-100">
-                  Lat: {property.latitude} | Lon: {property.longitude}
-                </div>
               </div>
 
-              <h1 className="text-3xl font-extrabold text-gray-800 mb-2 leading-tight">{property.title}</h1>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2 leading-tight">{property.title}</h1>
               <p className="text-4xl font-black text-blue-600 mb-8 tracking-tight">{formatRupiah(property.price)}</p>
               
-              <div className="grid grid-cols-3 gap-3 py-6 border-y border-gray-100 mb-6 bg-gray-50/50 rounded-2xl">
-                <div className="text-center"><Bed size={24} className="mx-auto text-blue-600 mb-1.5"/><p className="font-bold text-lg text-gray-800">{property.bedrooms}</p><p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Kamar</p></div>
-                <div className="text-center border-x border-gray-200"><Bath size={24} className="mx-auto text-blue-600 mb-1.5"/><p className="font-bold text-lg text-gray-800">{property.bathrooms}</p><p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Mandi</p></div>
-                <div className="text-center"><Maximize size={24} className="mx-auto text-blue-600 mb-1.5"/><p className="font-bold text-lg text-gray-800">{property.area_sqm}m²</p><p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Luas</p></div>
+              <div className="grid grid-cols-3 gap-3 py-6 border-t border-gray-100 bg-white">
+                <div className="text-center bg-gray-50 p-3 rounded-2xl"><Bed size={24} className="mx-auto text-blue-600 mb-1.5"/><p className="font-bold text-lg text-gray-800">{property.bedrooms}</p><p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Kamar</p></div>
+                <div className="text-center bg-gray-50 p-3 rounded-2xl"><Bath size={24} className="mx-auto text-blue-600 mb-1.5"/><p className="font-bold text-lg text-gray-800">{property.bathrooms}</p><p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Mandi</p></div>
+                <div className="text-center bg-gray-50 p-3 rounded-2xl"><Maximize size={24} className="mx-auto text-blue-600 mb-1.5"/><p className="font-bold text-lg text-gray-800">{property.area_sqm}m²</p><p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Luas</p></div>
               </div>
-
-              <h3 className="font-bold text-gray-800 mb-2 text-lg">Deskripsi</h3>
-              <p className="text-gray-600 text-sm whitespace-pre-wrap leading-relaxed text-justify">{property.description}</p>
             </div>
 
-            <div className="bg-blue-50/80 p-8 rounded-3xl border border-blue-100 shadow-sm">
-              <h3 className="font-bold text-blue-900 mb-5 flex items-center gap-2">Informasi Agen</h3>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-md border-2 border-white"><User size={28}/></div>
+            <div className="bg-blue-50/80 p-8 rounded-3xl border border-blue-200 shadow-lg shadow-blue-100">
+              <h3 className="font-extrabold text-blue-900 mb-5 flex items-center gap-2">Tanya Agen Sekarang</h3>
+              
+              <div className="flex items-center gap-4 mb-6 bg-white p-3 rounded-2xl border border-blue-100">
+                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-2 border-white shrink-0"><User size={28}/></div>
                 <div>
                   <p className="font-bold text-gray-800 text-lg leading-tight">{property.agent_name}</p>
                   <p className="text-gray-500 text-xs flex items-center gap-1 mt-1 font-medium"><Phone size={12} className="text-blue-500"/> {property.agent_phone}</p>
                 </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-blue-800 mb-2 uppercase tracking-wide">Pesan Anda</label>
+                <textarea 
+                  rows="4"
+                  value={waMessage}
+                  onChange={(e) => setWaMessage(e.target.value)}
+                  className="w-full p-4 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-700 bg-white resize-none shadow-inner"
+                ></textarea>
               </div>
               
               <a 
@@ -167,13 +206,13 @@ export default function PropertyDetail() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 onClick={handleContactWhatsApp}
-                className={`flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-bold transition-all shadow-lg text-base no-underline ${
+                className={`flex items-center justify-center gap-2 w-full py-4 rounded-xl font-bold transition-all shadow-lg text-base no-underline ${
                   !localStorage.getItem('token') 
-                  ? 'bg-green-400 text-white cursor-pointer' 
-                  : 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20'
+                  ? 'bg-green-500 text-white cursor-pointer' 
+                  : 'bg-green-400 hover:bg-green-600 text-white shadow-green-500/30'
                 }`}
               >
-               <Phone size={20}/> Hubungi via WhatsApp
+              <MessageCircle size={20}/> Kirim Pesan via WA
               </a>
             </div>
           </div>
@@ -181,16 +220,17 @@ export default function PropertyDetail() {
 
         <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 mb-20">
           <h3 className="font-extrabold text-2xl text-gray-800 mb-6 flex items-center gap-2">
-            <MapPin className="text-red-500" /> Peta Lokasi
+            <MapPin className="text-red-500" /> Lokasi Properti
           </h3>
           <div className="w-full h-[480px] rounded-2xl overflow-hidden border-2 border-gray-100 z-0 shadow-inner">
-            <MapContainer center={position} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' />
+            <MapContainer center={position} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <MapEvents target={position} property={property} /> 
             </MapContainer>
+            
           </div>
-          <p className="text-center text-xs text-gray-400 mt-5 italic bg-gray-100 w-fit mx-auto px-4 py-1.5 rounded-full">
-            Klik marker untuk memperbesar lokasi secara otomatis.
+          <p className="text-center text-xs text-gray-400 mt-5 italic bg-gray-50 border border-gray-100 w-fit mx-auto px-5 py-2 rounded-full">
+            Lokasi peta menunjukkan titik koordinat asli dari properti ini.
           </p>
         </div>
       </div>

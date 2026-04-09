@@ -5,6 +5,7 @@ import Auth from './pages/Auth';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentDashboard from './pages/AgentDashboard';
 import PropertyDetail from './pages/PropertyDetail';
+import MapSearch from './pages/MapSearch';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
@@ -80,7 +81,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
-            <Route path="/search" element={<h1 className="text-xl text-center mt-10">Halaman Peta</h1>} />
+            <Route path="/search" element={<MapSearch />} />
 
             {/* Rute Terkunci Khusus Admin */}
             <Route 

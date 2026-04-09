@@ -35,23 +35,34 @@ export default function Home() {
   const [heroIndex, setHeroIndex] = useState(0);
   const navigate = useNavigate();
 
-  const [searchParams, setSearchParams] = useState({ search: '', priceRange: 'Rentang Harga', bedrooms: 'Kamar Tidur' });
+  const [searchParams, setSearchParams] = useState({ search: '', priceRange: '', bedrooms: '' });
 
   const fetchProperties = async (params = {}) => {
     try {
       const response = await api.get('/properties', { params });
       setProperties(response.data);
+      setHeroIndex(0);
     } catch (err) { console.error("Gagal mengambil data", err); }
   };
 
-  useEffect(() => { fetchProperties(); }, []);
+  // --- FITUR LIVE SEARCH (Otomatis nyari pas ngetik) ---
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchProperties(searchParams);
+    }, 500); 
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchParams]);
 
+  // --- FITUR TOMBOL CARI (Bisa di klik atau tekan Enter) ---
   const handleSearch = (e) => {
     e.preventDefault();
     fetchProperties(searchParams);
   };
 
   const heroProperties = properties.slice(0, 5); 
+  const safeHeroIndex = heroProperties.length > 0 ? heroIndex % heroProperties.length : 0;
+  const currentHero = heroProperties[safeHeroIndex];
+
   useEffect(() => {
     if (heroProperties.length <= 1) return;
     const interval = setInterval(() => setHeroIndex((prev) => (prev + 1) % heroProperties.length), 6000);
@@ -61,7 +72,6 @@ export default function Home() {
   const handleHeroNext = () => setHeroIndex((prev) => (prev + 1) % heroProperties.length);
   const handleHeroPrev = () => setHeroIndex((prev) => (prev - 1 + heroProperties.length) % heroProperties.length);
 
-  // --- LOGIKA SWIPE ---
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
@@ -69,11 +79,9 @@ export default function Home() {
     setTouchEnd(null); 
     setTouchStart(e.targetTouches ? e.targetTouches[0].clientX : e.clientX); 
   };
-  
   const onTouchMoveEvent = (e) => {
     setTouchEnd(e.targetTouches ? e.targetTouches[0].clientX : e.clientX);
   };
-  
   const onTouchEndEvent = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
@@ -83,9 +91,10 @@ export default function Home() {
     setTouchEnd(null);
   };
 
-  const currentHeroBg = heroProperties.length > 0 && heroProperties[heroIndex].images.length > 0
-    ? heroProperties[heroIndex].images[0]
+  const currentHeroBg = currentHero && currentHero.images?.length > 0
+    ? currentHero.images[0]
     : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80';
+    
   const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 
   return (
@@ -113,35 +122,49 @@ export default function Home() {
         <div className="relative z-10 text-center px-4 w-full max-w-4xl pointer-events-none">
           <span className="inline-block px-4 py-1.5 rounded-full bg-white/20 text-white text-sm font-bold backdrop-blur-md mb-4 border border-white/30">Properti Unggulan</span>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 drop-shadow-lg leading-tight">
-            {heroProperties.length > 0 ? heroProperties[heroIndex].title : "Temukan Rumah Impianmu"}
+            {currentHero ? currentHero.title : "Temukan Rumah Impianmu"}
           </h1>
           <p className="text-blue-100 text-lg md:text-xl mb-10 flex items-center justify-center gap-2">
             <MapPin size={24} className="text-red-400 shrink-0"/> 
-            {heroProperties.length > 0 ? (heroProperties[heroIndex].address || "Alamat detail belum tersedia") : "Jelajahi properti terbaik di seluruh Indonesia"}
+            {currentHero ? (currentHero.address || "Alamat detail belum tersedia") : "Jelajahi properti terbaik di seluruh Indonesia"}
           </p>
         </div>
 
+        {/* KEMBALI MENGGUNAKAN FORM DENGAN TOMBOL CARI */}
         <form onSubmit={handleSearch} className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl bg-white p-3 md:p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-3 z-30 border border-gray-100 cursor-auto">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-3.5 text-gray-400" size={20}/>
-            <input type="text" value={searchParams.search} onChange={(e) => setSearchParams({...searchParams, search: e.target.value})} placeholder="Cari lokasi atau judul..." className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium" />
+            <input 
+              type="text" 
+              value={searchParams.search} 
+              onChange={(e) => setSearchParams({...searchParams, search: e.target.value})} 
+              placeholder="Cari lokasi atau judul..." 
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-blue-600/30 transition-all font-medium" 
+            />
           </div>
-          <select value={searchParams.priceRange} onChange={(e) => setSearchParams({...searchParams, priceRange: e.target.value})} className="px-4 py-3 bg-gray-50 rounded-xl outline-none text-gray-700 focus:ring-2 focus:ring-primary/20 font-medium cursor-pointer">
-            <option disabled>Rentang Harga</option>
-            <option>Semua Harga</option>
-            <option>&lt; 500 Juta</option>
-            <option>500 Jt - 1 M</option>
-            <option>&gt; 1 Milyar</option>
+          
+          <select value={searchParams.priceRange} onChange={(e) => setSearchParams({...searchParams, priceRange: e.target.value})} className="px-4 py-3 bg-gray-50 rounded-xl outline-none text-gray-700 focus:ring-2 focus:ring-blue-600/30 font-medium cursor-pointer">
+            <option value="" disabled>Pilih Harga</option>
+            <option value="">Semua Harga</option>
+            <option value="< 500 Juta">&lt; 500 Juta</option>
+            <option value="500 Jt - 1 M">500 Jt - 1 M</option>
+            <option value="> 1 Milyar">&gt; 1 Milyar</option>
           </select>
-          <select value={searchParams.bedrooms} onChange={(e) => setSearchParams({...searchParams, bedrooms: e.target.value})} className="px-4 py-3 bg-gray-50 rounded-xl outline-none text-gray-700 focus:ring-2 focus:ring-primary/20 font-medium cursor-pointer">
-            <option disabled>Kamar Tidur</option>
-            <option>Semua</option>
-            <option>1+ Kamar</option>
-            <option>2+ Kamar</option>
-            <option>3+ Kamar</option>
-            <option>4+ Kamar</option>
+
+          <select value={searchParams.bedrooms} onChange={(e) => setSearchParams({...searchParams, bedrooms: e.target.value})} className="px-4 py-3 bg-gray-50 rounded-xl outline-none text-gray-700 focus:ring-2 focus:ring-blue-600/30 font-medium cursor-pointer">
+            <option value="" disabled>Pilih Kamar</option>
+            <option value="">Semua Kamar</option>
+            <option value="1 Kamar">1 Kamar</option>
+            <option value="2 Kamar">2 Kamar</option>
+            <option value="3 Kamar">3 Kamar</option>
+            <option value="4+ Kamar">4+ Kamar</option>
+            <option value="5+ Kamar">5+ Kamar</option>
           </select>
-          <button type="submit" className="bg-primary hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 cursor-pointer">Cari</button>
+
+          {/* TOMBOL CARI KEMBALI HADIR */}
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-600/30 cursor-pointer">
+            Cari
+          </button>
         </form>
       </div>
 
@@ -149,7 +172,11 @@ export default function Home() {
         <div className="flex justify-between items-end mb-8">
           <div>
             <h2 className="text-3xl font-extrabold text-gray-800">Rekomendasi Properti</h2>
-            <p className="text-gray-500 mt-1">Daftar properti terbaik yang disetujui oleh admin.</p>
+            <p className="text-gray-500 mt-1">
+              {searchParams.search || searchParams.priceRange || searchParams.bedrooms 
+                ? `Menampilkan hasil pencarian untuk filter Anda.` 
+                : `Daftar properti terbaik yang disetujui oleh admin.`}
+            </p>
           </div>
         </div>
         
@@ -158,26 +185,25 @@ export default function Home() {
             <div className="col-span-full text-center py-20 text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm">
               <ImageIcon size={60} className="mx-auto text-gray-300 mb-4"/>
               <p className="text-xl font-bold text-gray-600">Tidak ada properti ditemukan.</p>
-              <p className="text-sm mt-1">Coba sesuaikan filter pencarian Anda.</p>
+              <p className="text-sm mt-1">Coba sesuaikan kata kunci atau filter pencarian Anda.</p>
             </div>
           ) : (
             properties.map((item) => (
               <div key={item.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col">
                 <div className="h-64 relative overflow-hidden">
                   <ImageSlider images={item.images || []} />
-                  <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-primary shadow-sm flex items-center gap-1">
+                  <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 shadow-sm flex items-center gap-1">
                     <MapPin size={12}/> {item.agent_name}
                   </div>
                 </div>
                 
                 <div className="p-6 flex-1 flex flex-col">
-                  {/* PENYESUAIAN ALAMAT DI KARTU HOME */}
                   <div className="flex items-start gap-1.5 text-gray-500 text-sm mb-2">
                     <MapPin size={16} className="text-red-400 shrink-0 mt-0.5"/> 
                     <span className="line-clamp-1">{item.address || "Alamat detail belum tersedia"}</span>
                   </div>
-                  <h3 className="font-extrabold text-xl text-gray-800 mb-1 group-hover:text-primary transition-colors line-clamp-2">{item.title}</h3>
-                  <p className="text-2xl font-black text-primary mb-4">{formatRupiah(item.price)}</p>
+                  <h3 className="font-extrabold text-xl text-gray-800 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">{item.title}</h3>
+                  <p className="text-2xl font-black text-blue-600 mb-4">{formatRupiah(item.price)}</p>
                   
                   <div className="flex items-center justify-between py-4 border-y border-gray-100 text-gray-600 mb-4">
                     <div className="flex items-center gap-2" title="Kamar Tidur"><Bed size={18} className="text-gray-400"/> <span className="font-bold">{item.bedrooms}</span></div>
@@ -185,7 +211,7 @@ export default function Home() {
                     <div className="flex items-center gap-2" title="Luas Bangunan"><Maximize size={18} className="text-gray-400"/> <span className="font-bold">{item.area_sqm} m²</span></div>
                   </div>
                   
-                  <button onClick={() => navigate(`/property/${item.id}`)} className="mt-auto w-full bg-blue-50 text-primary hover:bg-primary hover:text-white py-3 rounded-xl font-bold transition-all border border-blue-100 hover:border-primary">
+                  <button onClick={() => navigate(`/property/${item.id}`)} className="mt-auto w-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white py-3 rounded-xl font-bold transition-all border border-blue-100 hover:border-blue-600">
                     Lihat Detail
                   </button>
                 </div>
