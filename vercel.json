@@ -1,11 +1,11 @@
 {
     "version": 2,
     "rewrites": [{
-            "src": "/api/(.*)",
+            "sourch": "/api/(.*)",
             "dest": "/backend/index.js"
         },
         {
-            "src": "/(.*)",
+            "sourch": "/(.*)",
             "dest": "/frontend/index.html"
         }
     ]
