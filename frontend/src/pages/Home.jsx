@@ -211,7 +211,7 @@ export default function Home() {
                     <div className="flex items-center gap-2" title="Luas Bangunan"><Maximize size={18} className="text-gray-400"/> <span className="font-bold">{item.area_sqm} m²</span></div>
                   </div>
                   
-                  <button onClick={() => navigate(`/property/${item.id}`)} className="mt-auto w-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white py-3 rounded-xl font-bold transition-all border border-blue-100 hover:border-blue-600">
+                  <button onClick={() => navigate(`/property/${item.slug}`)} className="mt-auto w-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white py-3 rounded-xl font-bold transition-all border border-blue-100 hover:border-blue-600">
                     Lihat Detail
                   </button>
                 </div>

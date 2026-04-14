@@ -77,13 +77,11 @@ function App() {
         <Navbar />
         <main className="w-full">
           <Routes>
-            {/* Rute Publik (Bebas Masuk) */}
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/property/:id" element={<PropertyDetail />} />
+            <Route path="/property/:slug" element={<PropertyDetail />} />
             <Route path="/search" element={<MapSearch />} />
 
-            {/* Rute Terkunci Khusus Admin */}
             <Route 
               path="/admin-dashboard" 
               element={
@@ -93,7 +91,6 @@ function App() {
               } 
             />
 
-            {/* Rute Terkunci Khusus Agen */}
             <Route 
               path="/agent-dashboard" 
               element={
@@ -103,7 +100,6 @@ function App() {
               } 
             />
 
-            {/* Jika ngetik URL ngawur, lempar ke Home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

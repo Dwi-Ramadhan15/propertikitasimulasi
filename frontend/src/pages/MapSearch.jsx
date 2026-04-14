@@ -320,7 +320,7 @@ export default function MapSearch() {
                     <h4 className="font-bold text-gray-800 text-sm leading-tight truncate">{p.title}</h4>
                     <p className="text-blue-600 font-black text-sm my-1">{formatRupiah(p.price)}</p>
                     <button 
-                      onClick={() => navigate(`/property/${p.id}`)}
+                      onClick={() => navigate(`/property/${p.slug}`)}
                       className="w-full bg-blue-600 text-white text-[11px] font-bold py-1.5 rounded-md mt-2 hover:bg-blue-700 transition-colors shadow-sm"
                     >
                       Lihat Detail Rumah

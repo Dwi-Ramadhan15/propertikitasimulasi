@@ -9,6 +9,9 @@ router.put('/:id/status', verifyToken, checkRole(['super_admin']), propertyContr
 router.get('/agent', verifyToken, checkRole(['agen']), propertyController.getAgentProperties);
 router.post('/', verifyToken, checkRole(['agen']), uploadMultiple, propertyController.createProperty);
 router.get('/', propertyController.getPublicProperties);
+
+router.get('/slug/:slug', propertyController.getPropertyBySlug);
+
 router.get('/:id', propertyController.getPropertyById);
 
 module.exports = router;

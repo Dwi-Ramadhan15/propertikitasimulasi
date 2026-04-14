@@ -60,7 +60,7 @@ const getFacilityIcon = (name) => {
 };
 
 export default function PropertyDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
   const [mainImage, setMainImage] = useState('');
@@ -71,18 +71,24 @@ export default function PropertyDetail() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const response = await api.get(`/properties/${id}`);
+        const response = await api.get(`/properties/slug/${slug}`); 
+        
         setProperty(response.data);
         if (response.data.images?.length > 0) setMainImage(response.data.images[0]);
         
-        setWaMessage(`Halo ${response.data.agent_name}, saya melihat properti *${response.data.title}* di PropertiKita. Apakah masih tersedia?`);
+        const userStr = localStorage.getItem('user');
+        const userData = userStr ? JSON.parse(userStr) : null;
+        const userNameText = userData && userData.name ? `saya ${userData.name}, ` : 'saya ';
+
+        setWaMessage(`Halo ${response.data.agent_name}, ${userNameText}melihat properti *${response.data.title}* di PropertiKita. Apakah masih tersedia?`);
       } catch (err) {
+        console.error("Error detail:", err);
         alert("Properti tidak ditemukan!");
         navigate('/');
       } finally { setLoading(false); }
     };
     fetchDetail();
-  }, [id, navigate]);
+  }, [slug, navigate]);
 
   const handleContactWhatsApp = (e) => {
     const token = localStorage.getItem('token');
